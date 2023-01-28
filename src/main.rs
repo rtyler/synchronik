@@ -2,6 +2,9 @@
  * This is the main Janky entrypoint for the server"
  */
 
+#[macro_use]
+extern crate serde_json;
+
 use async_std::sync::{Arc, RwLock};
 use dotenv::dotenv;
 use handlebars::Handlebars;
@@ -56,30 +59,6 @@ mod routes {
     use std::collections::HashMap;
     use tide::{Body, Request, StatusCode};
     use uuid::Uuid;
-
-    /**
-     * Helper function to pull out a :uuid parameter from the path
-     */
-    fn get_uuid_param(req: &Request<AppState<'_>>) -> Result<Uuid, tide::Error> {
-        let uuid = req.param::<String>("uuid");
-
-        if uuid.is_err() {
-            return Err(tide::Error::from_str(
-                StatusCode::BadRequest,
-                "No uuid specified",
-            ));
-        }
-
-        debug!("Fetching poll: {:?}", uuid);
-
-        match Uuid::parse_str(&uuid.unwrap()) {
-            Err(_) => Err(tide::Error::from_str(
-                StatusCode::BadRequest,
-                "Invalid uuid specified",
-            )),
-            Ok(uuid) => Ok(uuid),
-        }
-    }
 
     /**
      *  GET /
