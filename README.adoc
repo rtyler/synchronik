@@ -22,19 +22,12 @@ intended to be a production system you can actually use.
 │ Server │http                                   │            │
 │        │ws                                     └──────┬─────┘
 └───┬────┘                                              │
-    │                                                   │
     │             What are your caps?                   │
     ├──────────────────────────────────────────────────►│
-    │                                                   │
-    │                                                   │
     │             git,svn,bash,rustc,cargo,websocket    │
     │◄──────────────────────────────────────────────────┤
-    │                                                   │
     │           great, here's some commands             │
     ├──────────────────────────────────────────────────►│
-    │                                                   │
-    │                                                   │
     │         kewl, here's the logs, id, etc            │
     │◄──────────────────────────────────────────────────┤
-    │                                                   │
 ----
