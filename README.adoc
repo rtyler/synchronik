@@ -3,3 +3,38 @@
 Janky is a simple CI system built in Rust. This is performative coding and not
 intended to be a production system you can actually use.
 
+
+
+* Two binaries:
+  * `janky-server`
+    * Listens HTTP
+    * Does web shit
+    * Interacts with agents
+  * `janky-agent`:
+    * Run workloads
+    * Listen HTTP
+    * executes commands
+
+[source]
+----
+┌────────┐                                       │            │http
+│        │sqlite3                                │   Agent    │ws
+│ Server │http                                   │            │
+│        │ws                                     └──────┬─────┘
+└───┬────┘                                              │
+    │                                                   │
+    │             What are your caps?                   │
+    ├──────────────────────────────────────────────────►│
+    │                                                   │
+    │                                                   │
+    │             git,svn,bash,rustc,cargo,websocket    │
+    │◄──────────────────────────────────────────────────┤
+    │                                                   │
+    │           great, here's some commands             │
+    ├──────────────────────────────────────────────────►│
+    │                                                   │
+    │                                                   │
+    │         kewl, here's the logs, id, etc            │
+    │◄──────────────────────────────────────────────────┤
+    │                                                   │
+----
