@@ -58,10 +58,8 @@ impl AppState<'_> {
  */
 mod routes {
     use crate::AppState;
-    
-    
+
     use tide::{Body, Request};
-    
 
     /**
      *  GET /
@@ -75,12 +73,7 @@ mod routes {
         Ok(body)
     }
 
-    pub mod api {
-        
-        
-
-        
-    }
+    pub mod api {}
 }
 
 #[async_std::main]
@@ -91,7 +84,8 @@ async fn main() -> Result<(), tide::Error> {
     let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
     let pool = SqlitePool::connect(&database_url).await?;
     if database_url == ":memory:" {
-        sqlx::migrate!().run(&pool).await?;
+        // TODO: Figure out why failing
+        //sqlx::migrate!().run(&pool).await?;
     }
 
     let state = AppState::new(pool);
@@ -123,6 +117,7 @@ async fn main() -> Result<(), tide::Error> {
     /*
      * All builds will have apidocs, since they're handy
      */
+    app.at("/apidocs").serve_dir("apidocs/")?;
     app.at("/static").serve_dir("static/")?;
     debug!("Configuring routes");
     app.at("/").get(routes::index);

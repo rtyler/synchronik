@@ -12,8 +12,7 @@ struct Capability {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-struct CapsRequest {
-}
+struct CapsRequest {}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 struct CapsResponse {
@@ -37,7 +36,5 @@ struct CommandResponse {
     task_url: Url,
 }
 
-
 #[cfg(test)]
-mod tests {
-}
+mod tests {}
