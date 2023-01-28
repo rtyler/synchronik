@@ -9,15 +9,18 @@ use async_std::sync::{Arc, RwLock};
 use dotenv::dotenv;
 use handlebars::Handlebars;
 use log::*;
+use sqlx::SqlitePool;
 
 #[derive(Clone, Debug)]
 pub struct AppState<'a> {
+    pub db: SqlitePool,
     hb: Arc<RwLock<Handlebars<'a>>>,
 }
 
 impl AppState<'_> {
-    fn new() -> Self {
+    fn new(db: SqlitePool) -> Self {
         Self {
+            db: db,
             hb: Arc::new(RwLock::new(Handlebars::new())),
         }
     }
@@ -85,8 +88,12 @@ async fn main() -> Result<(), tide::Error> {
     pretty_env_logger::init();
     dotenv().ok();
 
-    //let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    let state = AppState::new();
+    let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
+    let state = AppState::new(
+        SqlitePool::connect(&database_url)
+            .await
+            .expect("Failed to open SqlitePool"),
+    );
     state.register_templates().await;
     let mut app = tide::with_state(state);
 
