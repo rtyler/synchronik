@@ -89,12 +89,11 @@ async fn main() -> Result<(), tide::Error> {
     dotenv().ok();
 
     let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
-    let pool = SqlitePool::connect(&database_url).await?;
-    if database_url == ":memory:" {
-        sqlx::migrate!().run(&pool).await?;
-    }
-
-    let state = AppState::new(pool);
+    let state = AppState::new(
+        SqlitePool::connect(&database_url)
+            .await
+            .expect("Failed to open SqlitePool"),
+    );
     state.register_templates().await;
     let mut app = tide::with_state(state);
 
