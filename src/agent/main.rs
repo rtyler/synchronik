@@ -2,13 +2,13 @@ use dotenv::dotenv;
 use log::*;
 
 mod routes {
-    use log::*;
-    use tide::{Body, Request, StatusCode};
+    
+    use tide::{Body, Request};
 
     /**
      *  GET /
      */
-    pub async fn index(req: Request<()>) -> Result<Body, tide::Error> {
+    pub async fn index(_req: Request<()>) -> Result<Body, tide::Error> {
         Ok("Hello World from the Janky Agent".into())
     }
 }

@@ -20,7 +20,7 @@ pub struct AppState<'a> {
 impl AppState<'_> {
     fn new(db: SqlitePool) -> Self {
         Self {
-            db: db,
+            db,
             hb: Arc::new(RwLock::new(Handlebars::new())),
         }
     }
@@ -58,10 +58,10 @@ impl AppState<'_> {
  */
 mod routes {
     use crate::AppState;
-    use log::*;
-    use std::collections::HashMap;
-    use tide::{Body, Request, StatusCode};
-    use uuid::Uuid;
+    
+    
+    use tide::{Body, Request};
+    
 
     /**
      *  GET /
@@ -76,10 +76,10 @@ mod routes {
     }
 
     pub mod api {
-        use log::*;
-        use tide::{Body, Request, Response, StatusCode};
+        
+        
 
-        use crate::AppState;
+        
     }
 }
 
