@@ -10,7 +10,13 @@
       <main role="main" class="inner cover">
           <p>
           This is so Janky
-        </p>
+          </p>
+          <div id="projects">
+              <ul>
+              {{#each config.projects}}
+              <li><a href="/projects/{{@key}}"><strong>{{@key}}</strong></a></li>
+              {{/each}}
+          </div>
       </main>
     </div>
   </body>

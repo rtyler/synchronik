@@ -13,7 +13,7 @@ use dotenv::dotenv;
 use gumdrop::Options;
 use handlebars::Handlebars;
 use log::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use url::Url;
 
@@ -76,7 +76,8 @@ mod routes {
      */
     pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
         let params = json!({
-            "page": "home"
+            "page": "home",
+            "config" : req.state().config,
         });
 
         let mut body = req.state().render("index", &params).await?;
@@ -164,7 +165,7 @@ struct JankyYml {
     commands: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 enum Scm {
     GitHub {
@@ -175,7 +176,7 @@ enum Scm {
     },
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 struct Project {
     #[serde(with = "serde_yaml::with::singleton_map")]
@@ -189,7 +190,7 @@ struct Project {
  * Loaded meaning the server has pinged the agent and gotten necessary bootstrap
  * information
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Agent {
     url: Url,
     capabilities: Vec<janky::Capability>,
@@ -211,7 +212,7 @@ impl Agent {
     }
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServerConfig {
     agents: Vec<Url>,
     projects: HashMap<String, Project>,
