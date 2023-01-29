@@ -5,11 +5,16 @@
 #[macro_use]
 extern crate serde_json;
 
+use std::path::PathBuf;
+
 use async_std::sync::{Arc, RwLock};
 use dotenv::dotenv;
+use gumdrop::Options;
 use handlebars::Handlebars;
 use log::*;
+use serde::Deserialize;
 use sqlx::SqlitePool;
+use url::Url;
 
 #[derive(Clone, Debug)]
 pub struct AppState<'a> {
@@ -76,16 +81,71 @@ mod routes {
     pub mod api {}
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all="lowercase")]
+enum Scm {
+    Git,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct Project {
+    #[serde(rename="type")]
+    scm_type: Scm,
+    url: Url,
+    #[serde(rename="ref")]
+    scm_ref: String,
+    filename: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct ServerConfig {
+    agents: Vec<Url>,
+    projects: Vec<Project>,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            agents: vec![],
+            projects: vec![],
+        }
+    }
+}
+
+#[derive(Debug,Options)]
+struct ServerOptions {
+    #[options(help = "print help message")]
+    help: bool,
+    #[options(help="host:port to bind the server to", default="0.0.0.0:8000")]
+    listen: String,
+    #[options(help="Path to the configuration file")]
+    config: Option<PathBuf>,
+    #[options(help="Comma separated list of URLs for agents")]
+    agents: Vec<Url>,
+}
+
 #[async_std::main]
 async fn main() -> Result<(), tide::Error> {
     pretty_env_logger::init();
     dotenv().ok();
+    let opts = ServerOptions::parse_args_default_or_exit();
+    debug!("Starting with options: {:?}", opts);
 
+    let config = match opts.config {
+        Some(path) => {
+            let config_file = std::fs::File::open(path).expect("Failed to open config file");
+            serde_yaml::from_reader(config_file).expect("Failed to read config file")
+        },
+        None => ServerConfig::default(),
+    };
+
+    debug!("Starting with config: {:?}", config);
     let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
     let pool = SqlitePool::connect(&database_url).await?;
+
+    /* If janky-server is running in memory, make sure the database is set up properly */
     if database_url == ":memory:" {
-        // TODO: Figure out why failing
-        //sqlx::migrate!().run(&pool).await?;
+        sqlx::migrate!().run(&pool).await?;
     }
 
     let state = AppState::new(pool);
@@ -121,6 +181,6 @@ async fn main() -> Result<(), tide::Error> {
     app.at("/static").serve_dir("static/")?;
     debug!("Configuring routes");
     app.at("/").get(routes::index);
-    app.listen("0.0.0.0:8000").await?;
+    app.listen(opts.listen).await?;
     Ok(())
 }

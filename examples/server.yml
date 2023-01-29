@@ -1,0 +1,13 @@
+---
+agents:
+  - 'http://localhost:9000'
+projects:
+  - type: 'git'
+    url: 'https://github.com/rtyler/janky'
+    ref: 'main'
+    filename: 'Jankyfile'
+  - type: 'git'
+    url: 'https://github.com/rtyler/jdp'
+    ref: 'main'
+    filename: 'ci/Jankyfile'
+
