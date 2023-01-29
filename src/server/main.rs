@@ -63,7 +63,7 @@ impl AppState<'_> {
  */
 mod routes {
     use crate::AppState;
-
+    use log::*;
     use tide::{Body, Request};
 
     /**
@@ -73,6 +73,18 @@ mod routes {
         let params = json!({
             "page": "home"
         });
+
+        let res = octocrab::instance()
+            .repos("rtyler", "janky")
+            .raw_file(
+                octocrab::params::repos::Commitish("main".into()),
+                "Jankyfile",
+            )
+            .await?;
+
+        debug!("jank: {:?}", res);
+        debug!("text: {:?}", res.text().await?);
+
         let mut body = req.state().render("index", &params).await?;
         body.set_mime("text/html");
         Ok(body)
@@ -82,17 +94,17 @@ mod routes {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 enum Scm {
-    Git,
+    GitHub,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 struct Project {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     scm_type: Scm,
     url: Url,
-    #[serde(rename="ref")]
+    #[serde(rename = "ref")]
     scm_ref: String,
     filename: PathBuf,
 }
@@ -112,15 +124,15 @@ impl Default for ServerConfig {
     }
 }
 
-#[derive(Debug,Options)]
+#[derive(Debug, Options)]
 struct ServerOptions {
     #[options(help = "print help message")]
     help: bool,
-    #[options(help="host:port to bind the server to", default="0.0.0.0:8000")]
+    #[options(help = "host:port to bind the server to", default = "0.0.0.0:8000")]
     listen: String,
-    #[options(help="Path to the configuration file")]
+    #[options(help = "Path to the configuration file")]
     config: Option<PathBuf>,
-    #[options(help="Comma separated list of URLs for agents")]
+    #[options(help = "Comma separated list of URLs for agents")]
     agents: Vec<Url>,
 }
 
@@ -135,7 +147,7 @@ async fn main() -> Result<(), tide::Error> {
         Some(path) => {
             let config_file = std::fs::File::open(path).expect("Failed to open config file");
             serde_yaml::from_reader(config_file).expect("Failed to read config file")
-        },
+        }
         None => ServerConfig::default(),
     };
 
