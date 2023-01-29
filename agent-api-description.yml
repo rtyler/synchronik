@@ -26,14 +26,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CapsResponse'
+  /execute:
+    put:
+      summary: "Execute a series of commands on this agent"
+      description:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandRequest'
+            example:
+              commands:
+                - script: 'echo "Hi"'
+      responses:
+        200:
+          description: 'Successfully accepted the commands for execution'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        409:
+          description: 'Returned when the agent is busy with another series of commands'
 
 components:
   schemas:
     CapsResponse:
-      type: array
+      type: object
       properties:
         caps:
-          $ref: '#/components/schemas/Capability'
+          type: array
+          items:
+            $ref: '#/components/schemas/Capability'
     Capability:
       type: object
       properties:
@@ -43,3 +66,28 @@ components:
           type: string
         data:
           type: object
+    Command:
+      type: object
+      properties:
+        script:
+          type: string
+          description: "A script that can be exec()'d on the agent"
+    CommandRequest:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            $ref: '#/components/schemas/Command'
+    CommandResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        stream:
+          description: 'URL to streaming WebSockets logs'
+          type: string
+        task:
+          description: 'URL to the task metadata'
+          type: string
