@@ -8,7 +8,7 @@ needs:
 commands:
   - 'echo "Hello World"'
   - 'which cargo'
-  - <
+  - >
     #!/bin/sh
     pwd
     echo "This is not working properly?"
