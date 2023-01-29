@@ -3,7 +3,7 @@ agents:
   - 'http://localhost:9000'
 projects:
   'janky':
-    filename: 'Jankyfile'
+    filename: 'ci.janky.yml'
     scm:
       github:
         owner: 'rtyler'

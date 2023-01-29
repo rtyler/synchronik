@@ -1,0 +1,10 @@
+---
+# This is a Janky formatted YAML file. Using YAML for now to make hacking on
+# this quicker and easier
+
+needs:
+  - 'git'
+  - 'cargo'
+commands:
+  - 'echo "Hello World"'
+  - 'which cargo'
