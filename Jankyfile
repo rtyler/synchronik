@@ -1,0 +1,19 @@
+/*
+ * This is a simple Jankyfile for self-hosting Janky
+ */
+
+pipeline {
+    agent any 
+    stages {
+        stage('Build') { 
+            steps {
+                sh 'cargo build'
+            }
+        }
+        stage('Test') { 
+            steps {
+                sh 'cargo test test'
+            }
+        }
+    }
+}
