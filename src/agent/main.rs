@@ -33,8 +33,34 @@ mod routes {
          * This will take in the commands to actually execute
          */
         pub async fn execute(mut req: Request<()>) -> Result<Body, tide::Error> {
-            let commands: CommandRequest = req.body_json().await?;
-            debug!("Commands to exec: {:?}", commands);
+            let c: CommandRequest = req.body_json().await?;
+            debug!("Commands to exec: {:?}", c);
+
+            for command in c.commands.iter() {
+                use os_pipe::pipe;
+                use std::io::{BufRead, BufReader};
+                use std::process::Command;
+                let mut cmd = Command::new("sh");
+                cmd.args(["-c", &command.script]);
+                let (reader, writer) = pipe().unwrap();
+                let writer_clone = writer.try_clone().unwrap();
+                cmd.stdout(writer);
+                cmd.stderr(writer_clone);
+                let mut handle = cmd.spawn()?;
+                drop(cmd);
+
+                debug!("executing: {}", &command.script);
+                let bufr = BufReader::new(reader);
+                for line in bufr.lines() {
+                    if let Ok(buffer) = line {
+                        debug!("output: {}", buffer);
+                    }
+                }
+
+                let status = handle.wait()?;
+                debug!("status of {}: {:?}", &command.script, status);
+            }
+
             Ok("{}".into())
         }
 

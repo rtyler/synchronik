@@ -21,12 +21,12 @@ struct CapsResponse {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Command {
-    script: String,
+    pub script: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct CommandRequest {
-    commands: Vec<Command>,
+    pub commands: Vec<Command>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
