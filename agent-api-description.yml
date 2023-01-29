@@ -39,7 +39,7 @@ paths:
               commands:
                 - script: 'echo "Hi"'
       responses:
-        200:
+        201:
           description: 'Successfully accepted the commands for execution'
           content:
             application/json:
