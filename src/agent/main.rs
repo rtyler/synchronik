@@ -1,5 +1,10 @@
+#[macro_use]
+extern crate serde_json;
+
 use dotenv::dotenv;
 use log::*;
+
+mod caps;
 
 mod routes {
     use tide::{Body, Request};
@@ -12,6 +17,7 @@ mod routes {
     }
 
     pub mod api {
+        use crate::caps::*;
         use tide::{Body, Request};
 
         pub fn register(app: &mut tide::Server<()>) {
@@ -19,7 +25,14 @@ mod routes {
         }
 
         pub async fn get_caps(_req: Request<()>) -> Result<Body, tide::Error> {
-            Ok("{}".into())
+            let response = json!({
+                "caps" : [
+                    Git::has_capability(),
+                    Cargo::has_capability(),
+                ],
+            });
+
+            Ok(response.into())
         }
     }
 }
