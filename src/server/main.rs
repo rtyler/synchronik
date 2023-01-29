@@ -21,6 +21,7 @@ use url::Url;
 pub struct AppState<'a> {
     pub db: SqlitePool,
     pub config: ServerConfig,
+    pub agents: Vec<Agent>,
     hb: Arc<RwLock<Handlebars<'a>>>,
 }
 
@@ -29,6 +30,7 @@ impl AppState<'_> {
         Self {
             db,
             config,
+            agents: vec![],
             hb: Arc::new(RwLock::new(Handlebars::new())),
         }
     }
@@ -83,40 +85,83 @@ mod routes {
     }
 
     pub mod api {
-        use crate::{AppState, Scm};
+        use crate::{AppState, JankyYml, Scm};
         use log::*;
-        use tide::{Body, StatusCode, Request, Response};
+        use tide::{Body, Request, Response, StatusCode};
 
         /**
-        *  POST /projects/{name}
-        */
+         *  POST /projects/{name}
+         */
         pub async fn execute_project(req: Request<AppState<'_>>) -> Result<Response, tide::Error> {
             let name: String = req.param("name")?.into();
+            let state = req.state();
 
-            if ! req.state().config.has_project(&name) {
+            if !state.config.has_project(&name) {
                 debug!("Could not find project named: {}", name);
                 return Ok(Response::new(StatusCode::NotFound));
             }
 
-            if let Some(project) = req.state().config.projects.get(&name) {
+            if let Some(project) = state.config.projects.get(&name) {
                 match &project.scm {
-                    Scm::GitHub { owner, repo, scm_ref } => {
-                        debug!("Fetching the file {} from {}/{}", &project.filename, owner, repo);
+                    Scm::GitHub {
+                        owner,
+                        repo,
+                        scm_ref,
+                    } => {
+                        debug!(
+                            "Fetching the file {} from {}/{}",
+                            &project.filename, owner, repo
+                        );
                         let res = octocrab::instance()
                             .repos(owner, repo)
                             .raw_file(
                                 octocrab::params::repos::Commitish(scm_ref.into()),
-                                &project.filename
+                                &project.filename,
                             )
                             .await?;
-                        debug!("text: {:?}", res.text().await?);
-                    },
+                        let jankyfile: JankyYml = serde_yaml::from_str(&res.text().await?)?;
+                        debug!("text: {:?}", jankyfile);
+
+                        for agent in &state.agents {
+                            if agent.can_meet(&jankyfile.needs) {
+                                debug!("agent: {:?} can meet our needs", agent);
+                                let commands: Vec<janky::Command> = jankyfile
+                                    .commands
+                                    .iter()
+                                    .map(|c| janky::Command::with_script(c))
+                                    .collect();
+                                let commands = janky::CommandRequest { commands };
+                                let client = reqwest::Client::new();
+                                let res = client
+                                    .put(
+                                        agent
+                                            .url
+                                            .join("/api/v1/execute")
+                                            .expect("Failed to join execute URL"),
+                                    )
+                                    .json(&commands)
+                                    .send()
+                                    .await?;
+
+                                return Ok(json!({
+                                    "msg": format!("Executing on {}", &agent.url)
+                                })
+                                .into());
+                            }
+                        }
+                    }
                 }
                 return Ok("{}".into());
             }
             Ok(Response::new(StatusCode::InternalServerError))
         }
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct JankyYml {
+    needs: Vec<String>,
+    commands: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -136,6 +181,34 @@ struct Project {
     #[serde(with = "serde_yaml::with::singleton_map")]
     scm: Scm,
     filename: String,
+}
+
+/*
+ * Internal representation of an Agent that has been "loaded" by the server
+ *
+ * Loaded meaning the server has pinged the agent and gotten necessary bootstrap
+ * information
+ */
+#[derive(Clone, Debug)]
+pub struct Agent {
+    url: Url,
+    capabilities: Vec<janky::Capability>,
+}
+
+impl Agent {
+    pub fn can_meet(&self, needs: &Vec<String>) -> bool {
+        // TODO: Improve the performance of this by reducing the clones
+        let mut needs = needs.clone();
+        needs.sort();
+
+        let mut capabilities: Vec<String> = self
+            .capabilities
+            .iter()
+            .map(|c| c.name.to_lowercase())
+            .collect();
+        capabilities.sort();
+        capabilities == needs
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -185,8 +258,8 @@ async fn main() -> Result<(), tide::Error> {
         }
         None => ServerConfig::default(),
     };
-
     debug!("Starting with config: {:?}", config);
+
     let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
     let pool = SqlitePool::connect(&database_url).await?;
 
@@ -194,8 +267,20 @@ async fn main() -> Result<(), tide::Error> {
     if database_url == ":memory:" {
         sqlx::migrate!().run(&pool).await?;
     }
+    let mut state = AppState::new(pool, config.clone());
 
-    let state = AppState::new(pool, config);
+    for url in &config.agents {
+        debug!("Requesting capabilities from agent: {}", url);
+        let response: janky::CapsResponse = reqwest::get(url.join("/api/v1/capabilities")?)
+            .await?
+            .json()
+            .await?;
+        state.agents.push(Agent {
+            url: url.clone(),
+            capabilities: response.caps,
+        });
+    }
+
     state.register_templates().await;
     let mut app = tide::with_state(state);
 
@@ -228,7 +313,61 @@ async fn main() -> Result<(), tide::Error> {
     app.at("/static").serve_dir("static/")?;
     debug!("Configuring routes");
     app.at("/").get(routes::index);
-    app.at("/api/v1/projects/:name").post(routes::api::execute_project);
+    app.at("/api/v1/projects/:name")
+        .post(routes::api::execute_project);
     app.listen(opts.listen).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use janky::*;
+
+    #[test]
+    fn agent_can_meet_false() {
+        let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
+        let capabilities = vec![Capability::with_name("rustc")];
+        let agent = Agent {
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert_eq!(false, agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_true() {
+        let needs: Vec<String> = vec!["dotnet".into()];
+        let capabilities = vec![Capability::with_name("dotnet")];
+        let agent = Agent {
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert!(agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_false_multiple() {
+        let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
+        let capabilities = vec![Capability::with_name("dotnet")];
+        let agent = Agent {
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert_eq!(false, agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_true_multiple() {
+        let needs: Vec<String> = vec!["rspec".into(), "dotnet".into()];
+        let capabilities = vec![
+            Capability::with_name("dotnet"),
+            Capability::with_name("rspec"),
+        ];
+        let agent = Agent {
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert!(agent.can_meet(&needs));
+    }
 }
