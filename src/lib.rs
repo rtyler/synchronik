@@ -20,17 +20,17 @@ struct CapsResponse {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-struct Command {
+pub struct Command {
     script: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-struct CommandRequest {
+pub struct CommandRequest {
     commands: Vec<Command>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-struct CommandResponse {
+pub struct CommandResponse {
     uuid: Uuid,
     stream_url: Option<Url>,
     task_url: Url,
