@@ -18,7 +18,7 @@ dotenv = "~0.15"
 driftwood = "0"
 # Command line parsing
 gumdrop = "0.8"
-handlebars = { version = "3", features = ["dir_source"] }
+handlebars = { version = "4", features = ["dir_source"] }
 html-escape = "0.2"
 log = "~0.4.8"
 # Needed for GitHub API calls

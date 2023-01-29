@@ -27,9 +27,7 @@ mod routes {
         use crate::caps::*;
         use crate::*;
         use janky::{CommandRequest, CommandResponse};
-        use log::*;
         use tide::{Body, Request, Response, StatusCode};
-        use url::Url;
         use uuid::Uuid;
 
         use std::path::Path;
@@ -58,7 +56,7 @@ mod routes {
             // Create my log directory
             let log_dir = Path::new(AGENT_LOGS_DIR).join(uuid.hyphenated().to_string());
             // TODO: Handle this error
-            std::fs::create_dir(log_dir.clone());
+            std::fs::create_dir(log_dir.clone()).expect("Failed to create log dir");
 
             let log_file_path = log_dir.join("console.log");
             let work = Work {
@@ -66,7 +64,7 @@ mod routes {
                 log_file: log_file_path.clone(),
                 command: c,
             };
-            req.state().channel.send(work).await;
+            req.state().channel.send(work).await?;
 
             let response = CommandResponse {
                 uuid,
@@ -129,7 +127,6 @@ async fn worker(receiver: Receiver<Work>) {
         for command in work.command.commands.iter() {
             debug!("Command: {:?}", command);
             use os_pipe::pipe;
-            use std::io::{BufRead, BufReader, Write};
             use std::process::Command;
             let mut cmd = Command::new("sh");
             cmd.args(["-xec", &command.script]);
@@ -141,7 +138,7 @@ async fn worker(receiver: Receiver<Work>) {
             drop(cmd);
 
             debug!("executing: {}", &command.script);
-            std::io::copy(&mut reader, &mut bufw);
+            std::io::copy(&mut reader, &mut bufw).expect("Failed to copy streams");
 
             let status = handle.wait().expect("Failed to wait on handle");
             debug!("status of {}: {:?}", &command.script, status);
@@ -174,7 +171,7 @@ async fn main() -> Result<(), tide::Error> {
 
     debug!("Configuring routes");
     app.at("/").get(routes::index);
-    app.at("/agent-logs").serve_dir(AGENT_LOGS_DIR);
+    app.at("/agent-logs").serve_dir(AGENT_LOGS_DIR)?;
     routes::api::register(&mut app);
     app.listen("0.0.0.0:9000").await?;
     Ok(())

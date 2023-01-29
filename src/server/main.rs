@@ -27,15 +27,20 @@ pub struct AppState<'a> {
 
 impl AppState<'_> {
     fn new(db: SqlitePool, config: ServerConfig) -> Self {
+        let mut hb = Handlebars::new();
+
+        #[cfg(debug_assertions)]
+        hb.set_dev_mode(true);
+
         Self {
             db,
             config,
             agents: vec![],
-            hb: Arc::new(RwLock::new(Handlebars::new())),
+            hb: Arc::new(RwLock::new(hb)),
         }
     }
 
-    pub async fn register_templates(&self) -> Result<(), handlebars::TemplateFileError> {
+    pub async fn register_templates(&self) -> Result<(), handlebars::TemplateError> {
         let mut hb = self.hb.write().await;
         hb.clear_templates();
         hb.register_templates_directory(".hbs", "views")
@@ -46,14 +51,6 @@ impl AppState<'_> {
         name: &str,
         data: &serde_json::Value,
     ) -> Result<tide::Body, tide::Error> {
-        /*
-         * In debug mode, reload the templates on ever render to avoid
-         * needing a restart
-         */
-        #[cfg(debug_assertions)]
-        {
-            self.register_templates().await;
-        }
         let hb = self.hb.read().await;
         let view = hb.render(name, data)?;
         Ok(tide::Body::from_string(view))
@@ -68,7 +65,6 @@ impl AppState<'_> {
  */
 mod routes {
     use crate::AppState;
-    use log::*;
     use tide::{Body, Request};
 
     /**
@@ -86,9 +82,9 @@ mod routes {
     }
 
     pub mod api {
-        use crate::{AppState, JankyYml, Scm};
         use log::*;
-        use tide::{Body, Request, Response, StatusCode};
+        use crate::{AppState, JankyYml, Scm};
+        use tide::{Request, Response, StatusCode};
 
         /**
          *  POST /projects/{name}
@@ -133,7 +129,7 @@ mod routes {
                                     .collect();
                                 let commands = janky::CommandRequest { commands };
                                 let client = reqwest::Client::new();
-                                let res = client
+                                let _res = client
                                     .put(
                                         agent
                                             .url
@@ -282,7 +278,7 @@ async fn main() -> Result<(), tide::Error> {
         });
     }
 
-    state.register_templates().await;
+    state.register_templates().await.expect("Failed to register handlebars templates");
     let mut app = tide::with_state(state);
 
     #[cfg(not(debug_assertions))]
