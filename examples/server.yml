@@ -2,10 +2,13 @@
 agents:
   - 'http://localhost:9000'
 projects:
-  - type: 'github'
-    url: 'https://github.com/rtyler/janky'
-    ref: 'main'
+  'janky':
     filename: 'Jankyfile'
+    scm:
+      github:
+        owner: 'rtyler'
+        repo: 'janky'
+        ref: 'main'
   # The filetype Git is not yet supported
   #- type: 'git'
   #  url: 'https://github.com/rtyler/jdp'

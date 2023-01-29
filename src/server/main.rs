@@ -5,6 +5,7 @@
 #[macro_use]
 extern crate serde_json;
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use async_std::sync::{Arc, RwLock};
@@ -19,13 +20,15 @@ use url::Url;
 #[derive(Clone, Debug)]
 pub struct AppState<'a> {
     pub db: SqlitePool,
+    pub config: ServerConfig,
     hb: Arc<RwLock<Handlebars<'a>>>,
 }
 
 impl AppState<'_> {
-    fn new(db: SqlitePool) -> Self {
+    fn new(db: SqlitePool, config: ServerConfig) -> Self {
         Self {
             db,
+            config,
             hb: Arc::new(RwLock::new(Handlebars::new())),
         }
     }
@@ -74,52 +77,84 @@ mod routes {
             "page": "home"
         });
 
-        let res = octocrab::instance()
-            .repos("rtyler", "janky")
-            .raw_file(
-                octocrab::params::repos::Commitish("main".into()),
-                "Jankyfile",
-            )
-            .await?;
-
-        debug!("jank: {:?}", res);
-        debug!("text: {:?}", res.text().await?);
-
         let mut body = req.state().render("index", &params).await?;
         body.set_mime("text/html");
         Ok(body)
     }
 
-    pub mod api {}
+    pub mod api {
+        use crate::{AppState, Scm};
+        use log::*;
+        use tide::{Body, StatusCode, Request, Response};
+
+        /**
+        *  POST /projects/{name}
+        */
+        pub async fn execute_project(req: Request<AppState<'_>>) -> Result<Response, tide::Error> {
+            let name: String = req.param("name")?.into();
+
+            if ! req.state().config.has_project(&name) {
+                debug!("Could not find project named: {}", name);
+                return Ok(Response::new(StatusCode::NotFound));
+            }
+
+            if let Some(project) = req.state().config.projects.get(&name) {
+                match &project.scm {
+                    Scm::GitHub { owner, repo, scm_ref } => {
+                        debug!("Fetching the file {} from {}/{}", &project.filename, owner, repo);
+                        let res = octocrab::instance()
+                            .repos(owner, repo)
+                            .raw_file(
+                                octocrab::params::repos::Commitish(scm_ref.into()),
+                                &project.filename
+                            )
+                            .await?;
+                        debug!("text: {:?}", res.text().await?);
+                    },
+                }
+                return Ok("{}".into());
+            }
+            Ok(Response::new(StatusCode::InternalServerError))
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum Scm {
-    GitHub,
+    GitHub {
+        owner: String,
+        repo: String,
+        #[serde(rename = "ref")]
+        scm_ref: String,
+    },
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
 struct Project {
-    #[serde(rename = "type")]
-    scm_type: Scm,
-    url: Url,
-    #[serde(rename = "ref")]
-    scm_ref: String,
-    filename: PathBuf,
+    #[serde(with = "serde_yaml::with::singleton_map")]
+    scm: Scm,
+    filename: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct ServerConfig {
+pub struct ServerConfig {
     agents: Vec<Url>,
-    projects: Vec<Project>,
+    projects: HashMap<String, Project>,
+}
+
+impl ServerConfig {
+    fn has_project(&self, name: &str) -> bool {
+        self.projects.contains_key(name)
+    }
 }
 
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
             agents: vec![],
-            projects: vec![],
+            projects: HashMap::default(),
         }
     }
 }
@@ -160,7 +195,7 @@ async fn main() -> Result<(), tide::Error> {
         sqlx::migrate!().run(&pool).await?;
     }
 
-    let state = AppState::new(pool);
+    let state = AppState::new(pool, config);
     state.register_templates().await;
     let mut app = tide::with_state(state);
 
@@ -193,6 +228,7 @@ async fn main() -> Result<(), tide::Error> {
     app.at("/static").serve_dir("static/")?;
     debug!("Configuring routes");
     app.at("/").get(routes::index);
+    app.at("/api/v1/projects/:name").post(routes::api::execute_project);
     app.listen(opts.listen).await?;
     Ok(())
 }

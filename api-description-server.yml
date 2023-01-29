@@ -1,0 +1,33 @@
+---
+openapi: "3.0.0"
+info:
+  description: |
+    Janky Server API defintion
+  version: "1.0.0"
+  title: Janky APIs
+  contact:
+    email: "rtyler+janky@brokenco.de"
+  license:
+    name: "AGPL v3.0"
+    url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
+servers:
+  - url: 'http://localhost:8000/api/v1'
+    description: Local dev server (APIv1)
+
+paths:
+  '/projects/{name}':
+    post:
+      summary: 'Trigger execution for this project'
+      description:
+      parameters:
+        - in: path
+          name: name
+          required: true
+          example: 'janky'
+          schema:
+            type: string
+      responses:
+        404:
+          summary: 'No project configured by that name'
+        200:
+          summary: 'Execution has been triggered'
