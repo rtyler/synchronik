@@ -13,6 +13,7 @@ intended to be a production system you can actually use.
     * Listen HTTP
     * executes commands
 
+.Basic Agent/Server Project Execution Flow
 [source]
 ----
 ┌────────┐                                       │            │http
@@ -22,7 +23,7 @@ intended to be a production system you can actually use.
 └───┬────┘                                              │
     │             What are your caps?                   │
     ├──────────────────────────────────────────────────►│
-    │             git,svn,bash,rustc,cargo,websocket    │
+    │             git,svn,bash,rustc,cargo              │
     │◄──────────────────────────────────────────────────┤
     │           great, here's some commands             │
     ├──────────────────────────────────────────────────►│
