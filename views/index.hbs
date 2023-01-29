@@ -2,20 +2,42 @@
 <html lang="en">
   <head>
       <title>Janky</title>
-      <link type="text/css" rel="stylesheet" href="/theme.css"/>
+      <link type="text/css" rel="stylesheet" href="/static/bootstrap.min.css"/>
+      <script src="/static/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+
   </head>
 
   <body class="text-center">
+    {{> _navbar }}
+
     <div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
       <main role="main" class="inner cover">
-          <p>
-          This is so Janky
-          </p>
           <div id="projects">
-              <ul>
+            <table class="table table-dark table-striped">
+                <thead>
+                  <td>
+                    <strong>Name</strong>
+                  </td>
+                  <td>
+                    <strong>Description</strong>
+                  </td>
+                  <td>
+                    <strong>Actions</strong>
+                  </td>
+                </thead>
               {{#each config.projects}}
-              <li><a href="/projects/{{@key}}"><strong>{{@key}}</strong></a></li>
+                <tr>
+                    <td>
+                        <a class="text-reset" href="/projects/{{@key}}"><strong>{{@key}}</strong></a>
+                    </td>
+                    <td>
+                        No Description
+                    </td>
+                    <td>
+                    </td>
+                </tr>
               {{/each}}
+            </table>
           </div>
       </main>
     </div>
