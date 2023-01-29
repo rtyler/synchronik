@@ -19,3 +19,4 @@ Cargo.lock
 # Added by cargo
 
 /target
+agent-logs/

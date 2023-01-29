@@ -15,7 +15,7 @@ path = "src/agent/main.rs"
 async-std = { version = "1", features = ["attributes"] }
 chrono = "0.4.15"
 serde = { version = "1.0", features = ["derive"] }
-dotenv = "~0.15.0"
+dotenv = "~0.15"
 driftwood = "0"
 handlebars = { version = "~3.4.0", features = ["dir_source"] }
 html-escape = "~0.2.6"
@@ -25,5 +25,5 @@ pretty_env_logger = "~0.3.1"
 serde_json = "~1.0.0"
 sqlx = { version = "~0.5.1", features = ["chrono", "json", "migrate", "offline", "sqlite", "uuid", "runtime-async-std-rustls"] }
 tide = "0"
-uuid = { version = "0", features = ["v4", "serde"]}
+uuid = { version = "1", features = ["v4", "serde"]}
 url = "2"

@@ -1,8 +1,12 @@
 #[macro_use]
 extern crate serde_json;
 
+use std::path::PathBuf;
+
 use dotenv::dotenv;
 use log::*;
+
+const AGENT_LOGS_DIR: &str = "agent-logs";
 
 mod caps;
 
@@ -18,9 +22,14 @@ mod routes {
 
     pub mod api {
         use crate::caps::*;
-        use janky::CommandRequest;
+        use crate::AGENT_LOGS_DIR;
+        use janky::{CommandRequest, CommandResponse};
         use log::*;
         use tide::{Body, Request};
+        use url::Url;
+        use uuid::Uuid;
+
+        use std::path::Path;
 
         pub fn register(app: &mut tide::Server<()>) {
             app.at("/api/v1/capabilities").get(get_caps);
@@ -35,14 +44,23 @@ mod routes {
         pub async fn execute(mut req: Request<()>) -> Result<Body, tide::Error> {
             let c: CommandRequest = req.body_json().await?;
             debug!("Commands to exec: {:?}", c);
+            let uuid = Uuid::new_v4();
+            // Create my log directory
+            let log_dir = Path::new(AGENT_LOGS_DIR).join(uuid.hyphenated().to_string());
+            // TODO: Handle this error
+            std::fs::create_dir(log_dir.clone());
+
+            let log_file_path = log_dir.join("console.log");
+            let log_file = std::fs::File::create(log_file_path.clone()).unwrap();
+            let mut bufw = std::io::BufWriter::new(log_file);
 
             for command in c.commands.iter() {
                 use os_pipe::pipe;
-                use std::io::{BufRead, BufReader};
+                use std::io::{BufRead, BufReader, Write};
                 use std::process::Command;
                 let mut cmd = Command::new("sh");
-                cmd.args(["-c", &command.script]);
-                let (reader, writer) = pipe().unwrap();
+                cmd.args(["-xec", &command.script]);
+                let (mut reader, writer) = pipe().unwrap();
                 let writer_clone = writer.try_clone().unwrap();
                 cmd.stdout(writer);
                 cmd.stderr(writer_clone);
@@ -50,18 +68,22 @@ mod routes {
                 drop(cmd);
 
                 debug!("executing: {}", &command.script);
-                let bufr = BufReader::new(reader);
-                for line in bufr.lines() {
-                    if let Ok(buffer) = line {
-                        debug!("output: {}", buffer);
-                    }
-                }
+                std::io::copy(&mut reader, &mut bufw);
 
                 let status = handle.wait()?;
                 debug!("status of {}: {:?}", &command.script, status);
             }
 
-            Ok("{}".into())
+            let response = CommandResponse {
+                uuid,
+                stream: None,
+                task: None,
+                log: req
+                    .url()
+                    .join(&format!("../../{}", log_file_path.display()))
+                    .unwrap(),
+            };
+            Ok(Body::from_json(&response)?)
         }
 
         /*
@@ -92,8 +114,16 @@ async fn main() -> Result<(), tide::Error> {
         app.with(driftwood::ApacheCombinedLogger);
     }
 
+    /*
+     * Create a logs directory if it doesn't exist
+     */
+    if !PathBuf::from(AGENT_LOGS_DIR).is_dir() {
+        std::fs::create_dir(AGENT_LOGS_DIR).expect("Failed to create agent logs directory");
+    }
+
     debug!("Configuring routes");
     app.at("/").get(routes::index);
+    app.at("/agent-logs").serve_dir(AGENT_LOGS_DIR);
     routes::api::register(&mut app);
     app.listen("0.0.0.0:9000").await?;
     Ok(())

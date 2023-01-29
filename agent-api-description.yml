@@ -88,6 +88,12 @@ components:
         stream:
           description: 'URL to streaming WebSockets logs'
           type: string
+          format: url
         task:
           description: 'URL to the task metadata'
           type: string
+          format: url
+        log:
+          description: 'URL to the raw log of the task run'
+          type: string
+          format: url

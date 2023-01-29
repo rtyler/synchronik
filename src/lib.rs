@@ -31,9 +31,10 @@ pub struct CommandRequest {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct CommandResponse {
-    uuid: Uuid,
-    stream_url: Option<Url>,
-    task_url: Url,
+    pub uuid: Uuid,
+    pub stream: Option<Url>,
+    pub task: Option<Url>,
+    pub log: Url,
 }
 
 #[cfg(test)]
