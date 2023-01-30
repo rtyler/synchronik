@@ -1,0 +1,229 @@
+{
+  "db": "SQLite",
+  "02211dd3eb7fae06b7aa31f93075705d63715180042e2230741847d771529a72": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "INSERT INTO projects (uuid, name, created_at) VALUES (?, ?, ?)"
+  },
+  "16aca487288926010cd2bc6ad073343803e27a665aab4929717641b51cfbbdd0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT * FROM projects WHERE name = ?"
+  },
+  "2538a6ddc8153c8c15689d84d3fa03d35101d0d44ced0fbb914aa9986eb50638": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "definition",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT * FROM run_definition WHERE uuid = ?"
+  },
+  "2805947c9f2f72cfa673c8d4f1adbb96ddbfe2055b7e912b89936436ec17097d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 4
+      }
+    },
+    "query": "INSERT INTO scm_info (uuid, git_url, ref, created_at) VALUES (?, ?, ?, ?)"
+  },
+  "2d48553d1a6ffbd898f40f0e94a0a472b8d34302af74b886bec3934d225b3bc7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "num",
+          "ordinal": 1,
+          "type_info": "Int64"
+        },
+        {
+          "name": "status",
+          "ordinal": 2,
+          "type_info": "Int64"
+        },
+        {
+          "name": "log_url",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "project",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "definition",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "scm_info",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 7,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT * FROM runs WHERE uuid = ?"
+  },
+  "4f4e02e3e0c6e954cad36b001386acc4e208988344b6cc00d78eb0f2e44e0172": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 7
+      }
+    },
+    "query": "INSERT INTO runs (uuid, num, status, log_url, definition, scm_info, project) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  },
+  "53e30732dd99a1729b202e124f96edd308664c2377081d564d34a63c4424e7df": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "git_url",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "ref",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 3,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT * FROM scm_info WHERE uuid = ?"
+  },
+  "980b3cb885d26d06b4178df215617e26aecd79f4d813df14770ec8ae540d0ce2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "SELECT * FROM projects WHERE uuid = ?"
+  },
+  "de3900705f74f03e76e4cd3076c6642c1d3585f263db326c9671d794d5b32a63": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 3
+      }
+    },
+    "query": "INSERT INTO run_definition (uuid, definition, created_at) VALUES (?, ?, ?)"
+  }
+}
