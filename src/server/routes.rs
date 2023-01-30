@@ -13,6 +13,7 @@ use tide::{Body, Request};
 pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
     let params = json!({
         "page": "home",
+        "agents" : req.state().agents,
         "config" : req.state().config,
     });
 

@@ -11,38 +11,58 @@
     {{> _navbar }}
 
     <div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
-      <main role="main" class="inner cover">
-          <div id="projects">
-            <table class="table table-dark table-striped">
-                <thead>
-                  <td>
-                    <strong>Name</strong>
-                  </td>
-                  <td>
-                    <strong>Description</strong>
-                  </td>
-                  <td>
-                    <strong>Actions</strong>
-                  </td>
-                </thead>
-              {{#each config.projects}}
-                <tr>
-                    <td>
-                        <a class="text-reset" href="/projects/{{@key}}"><strong>{{@key}}</strong></a>
-                    </td>
-                    <td>
-                        No Description
-                    </td>
-                    <td>
-                        <form method="POST" action="/api/v1/projects/{{@key}}">
-                            <input type="submit" value="Execute"/>
-                        </form>
-                    </td>
-                </tr>
-              {{/each}}
-            </table>
-          </div>
-      </main>
+        <div class="row">
+            <div class="col col-sm-2">
+                <table class="table table-striped">
+                    <thead>
+                        <td>Agents</td>
+                    </thead>
+                    {{#each agents}}
+                        <tr>
+                            <td>
+                                <span title="Capabilities: {{#each this.capabilities}}
+* {{this.name}} {{/each}}">
+                                    {{this.name}}
+                                </span>
+                            </td>
+                        </tr>
+                    {{/each}}
+                </table>
+            </div>
+            <div class="col col-lg">
+                <main role="main" class="inner cover"> <div id="projects">
+                        <table class="table table-dark table-striped">
+                            <thead>
+                            <td>
+                                <strong>Name</strong>
+                            </td>
+                            <td>
+                                <strong>Description</strong>
+                            </td>
+                            <td>
+                                <strong>Actions</strong>
+                            </td>
+                            </thead>
+                        {{#each config.projects}}
+                            <tr>
+                                <td>
+                                    <a class="text-reset" href="/projects/{{@key}}"><strong>{{@key}}</strong></a>
+                                </td>
+                                <td>
+                                    No Description
+                                </td>
+                                <td>
+                                    <form method="POST" action="/api/v1/projects/{{@key}}">
+                                        <input type="submit" value="Execute"/>
+                                    </form>
+                                </td>
+                            </tr>
+                        {{/each}}
+                        </table>
+                    </div>
+                </main>
+            </div>
+        </div>
     </div>
   </body>
 </html>

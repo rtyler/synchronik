@@ -1,6 +1,7 @@
 ---
 agents:
-  - 'http://localhost:9000'
+  'local':
+    url: 'http://localhost:9000'
 projects:
   'janky':
     filename: 'ci.janky.yml'

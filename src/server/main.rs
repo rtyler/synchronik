@@ -93,6 +93,7 @@ struct Project {
  */
 #[derive(Clone, Debug, Serialize)]
 pub struct Agent {
+    name: String,
     url: Url,
     capabilities: Vec<janky::Capability>,
 }
@@ -114,8 +115,13 @@ impl Agent {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+struct AgentConfig {
+    url: Url,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServerConfig {
-    agents: Vec<Url>,
+    agents: HashMap<String, AgentConfig>,
     projects: HashMap<String, Project>,
 }
 
@@ -128,7 +134,7 @@ impl ServerConfig {
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
-            agents: vec![],
+            agents: HashMap::default(),
             projects: HashMap::default(),
         }
     }
@@ -188,14 +194,15 @@ async fn main() -> Result<(), tide::Error> {
         }
     }
 
-    for url in &config.agents {
-        debug!("Requesting capabilities from agent: {}", url);
-        let response: janky::CapsResponse = reqwest::get(url.join("/api/v1/capabilities")?)
+    for (name, agent) in config.agents.iter() {
+        debug!("Requesting capabilities from agent: {:?}", agent);
+        let response: janky::CapsResponse = reqwest::get(agent.url.join("/api/v1/capabilities")?)
             .await?
             .json()
             .await?;
         state.agents.push(Agent {
-            url: url.clone(),
+            name: name.clone(),
+            url: agent.url.clone(),
             capabilities: response.caps,
         });
     }
@@ -251,6 +258,7 @@ mod tests {
         let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
         let capabilities = vec![Capability::with_name("rustc")];
         let agent = Agent {
+            name: "test".into(),
             url: Url::parse("http://localhost").unwrap(),
             capabilities,
         };
@@ -262,6 +270,7 @@ mod tests {
         let needs: Vec<String> = vec!["dotnet".into()];
         let capabilities = vec![Capability::with_name("dotnet")];
         let agent = Agent {
+            name: "test".into(),
             url: Url::parse("http://localhost").unwrap(),
             capabilities,
         };
@@ -273,6 +282,7 @@ mod tests {
         let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
         let capabilities = vec![Capability::with_name("dotnet")];
         let agent = Agent {
+            name: "test".into(),
             url: Url::parse("http://localhost").unwrap(),
             capabilities,
         };
@@ -287,6 +297,7 @@ mod tests {
             Capability::with_name("rspec"),
         ];
         let agent = Agent {
+            name: "test".into(),
             url: Url::parse("http://localhost").unwrap(),
             capabilities,
         };
