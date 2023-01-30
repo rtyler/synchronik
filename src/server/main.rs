@@ -241,8 +241,12 @@ async fn main() -> Result<(), tide::Error> {
      */
     app.at("/apidocs").serve_dir("apidocs/")?;
     app.at("/static").serve_dir("static/")?;
+
     debug!("Configuring routes");
     app.at("/").get(routes::index);
+    app.at("/project/:name").get(routes::project);
+
+    debug!("Configuring API routes");
     app.at("/api/v1/projects/:name")
         .post(routes::api::execute_project);
     app.listen(opts.listen).await?;

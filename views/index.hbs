@@ -43,16 +43,15 @@
                                 <strong>Actions</strong>
                             </td>
                             </thead>
-                        {{#each config.projects}}
+                        {{#each projects}}
                             <tr>
                                 <td>
-                                    <a class="text-reset" href="/projects/{{@key}}"><strong>{{@key}}</strong></a>
+                                    <a class="text-reset" href="/project/{{this.name}}"><strong>{{this.name}}</strong></a>
                                 </td>
                                 <td>
-                                    {{this.description}}
                                 </td>
                                 <td>
-                                    <form method="POST" action="/api/v1/projects/{{@key}}">
+                                    <form method="POST" action="/api/v1/projects/{{this.name}}">
                                         <input type="submit" value="Execute"/>
                                     </form>
                                 </td>

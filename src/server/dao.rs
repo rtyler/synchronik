@@ -3,11 +3,12 @@
  */
 
 use chrono::{DateTime, NaiveDateTime, Utc};
+use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 use uuid::Uuid;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize)]
 pub struct Project {
     uuid: String,
     name: String,
@@ -36,6 +37,12 @@ impl Project {
     pub async fn by_name(name: &str, pool: &SqlitePool) -> Result<Project, sqlx::Error> {
         sqlx::query_as!(Project, "SELECT * FROM projects WHERE name = ?", name)
             .fetch_one(pool)
+            .await
+    }
+
+    pub async fn list(pool: &SqlitePool) -> Result<Vec<Project>, sqlx::Error> {
+        sqlx::query_as!(Project, "SELECT * FROM projects")
+            .fetch_all(pool)
             .await
     }
 

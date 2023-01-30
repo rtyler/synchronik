@@ -15,9 +15,24 @@ pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
         "page": "home",
         "agents" : req.state().agents,
         "config" : req.state().config,
+        "projects" : crate::dao::Project::list(&req.state().db).await?,
     });
 
     let mut body = req.state().render("index", &params).await?;
+    body.set_mime("text/html");
+    Ok(body)
+}
+
+/**
+ * GET /project/:name
+ */
+pub async fn project(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
+    let name: String = req.param("name")?.into();
+    let params = json!({
+        "name" : name,
+    });
+
+    let mut body = req.state().render("project", &params).await?;
     body.set_mime("text/html");
     Ok(body)
 }

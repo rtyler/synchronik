@@ -186,6 +186,36 @@
     },
     "query": "SELECT * FROM scm_info WHERE uuid = ?"
   },
+  "8482da66fb4c815cf21576e0b5c8121f5cb3a96b0a3f5e8241dbd677860c62af": {
+    "describe": {
+      "columns": [
+        {
+          "name": "uuid",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 2,
+          "type_info": "Datetime"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Right": 0
+      }
+    },
+    "query": "SELECT * FROM projects"
+  },
   "980b3cb885d26d06b4178df215617e26aecd79f4d813df14770ec8ae540d0ce2": {
     "describe": {
       "columns": [
