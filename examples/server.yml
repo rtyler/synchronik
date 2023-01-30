@@ -2,8 +2,20 @@
 agents:
   'local':
     url: 'http://localhost:9000'
+  'Duplicate Local':
+    url: 'http://localhost:9000'
 projects:
   'janky':
+    description: |
+      Self-hosted Janky project
+    filename: 'ci.janky.yml'
+    scm:
+      github:
+        owner: 'rtyler'
+        repo: 'janky'
+        ref: 'main'
+  'janky with spaces':
+    description: A test configuration with spaces in the name
     filename: 'ci.janky.yml'
     scm:
       github:

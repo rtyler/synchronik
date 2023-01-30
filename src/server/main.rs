@@ -80,9 +80,10 @@ enum Scm {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 struct Project {
+    description: String,
+    filename: String,
     #[serde(with = "serde_yaml::with::singleton_map")]
     scm: Scm,
-    filename: String,
 }
 
 /*
