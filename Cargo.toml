@@ -33,3 +33,4 @@ sqlx = { version = "~0.6", features = ["chrono", "json", "migrate", "offline", "
 tide = "0"
 uuid = { version = "1", features = ["v4", "serde"]}
 url = "2"
+tide-websockets = "0.4.0"
