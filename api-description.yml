@@ -2,7 +2,7 @@
 openapi: "3.0.0"
 info:
   description: |
-    Janky Agent API defintion
+    Janky API defintion
   version: "1.0.0"
   title: Janky APIs
   contact:
@@ -11,12 +11,42 @@ info:
     name: "AGPL v3.0"
     url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
 servers:
-  - url: 'http://localhost:9000/api/v1'
-    description: Local dev agent (APIv1)
+  - url: 'http://localhost:8000'
+    description: Local dev server
+  - url: 'http://localhost:9000'
+    description: Local dev agent
+
+tags:
+- name: 'agent'
+  description: 'Agent APIs'
+- name: 'server'
+  description: 'Server APIs'
 
 paths:
-  /capabilities:
+  '/api/v1/projects/{name}':
+    post:
+      tags:
+        - 'server'
+      summary: 'Trigger execution for this project'
+      description:
+      parameters:
+        - in: path
+          name: name
+          required: true
+          example: 'janky'
+          schema:
+            type: string
+      responses:
+        404:
+          summary: 'No project configured by that name'
+        200:
+          summary: 'Execution has been triggered'
+
+
+  '/api/v1/capabilities':
     get:
+      tags:
+        - 'agent'
       summary: "Retrieve a list of capabilities of this agent"
       description:
       responses:
@@ -26,8 +56,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CapsResponse'
-  /execute:
+  '/api/v1/execute':
     put:
+      tags:
+        - 'agent'
       summary: "Execute a series of commands on this agent"
       description:
       requestBody:

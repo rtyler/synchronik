@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec ruby -ryaml -rjson -e 'puts JSON.dump(YAML.load(STDIN.read))' < api-description-agent.yml > apidocs/api-description.json
