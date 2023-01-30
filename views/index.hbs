@@ -34,6 +34,9 @@
                         No Description
                     </td>
                     <td>
+                        <form method="POST" action="/api/v1/projects/{{@key}}">
+                            <input type="submit" value="Execute"/>
+                        </form>
                     </td>
                 </tr>
               {{/each}}

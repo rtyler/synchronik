@@ -123,7 +123,10 @@ async fn worker(receiver: Receiver<Work>) {
     while let Ok(work) = receiver.recv().await {
         let log_file = std::fs::File::create(&work.log_file).unwrap();
         let mut bufw = std::io::BufWriter::new(log_file);
-        debug!("Starting to execute the commands");
+        debug!(
+            "Starting to execute the commands, output in {:?}",
+            &work.log_file
+        );
         for command in work.command.commands.iter() {
             debug!("Command: {:?}", command);
             use os_pipe::pipe;
