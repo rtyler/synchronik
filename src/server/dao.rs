@@ -3,32 +3,33 @@
  */
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use sqlx::{FromRow, SqlitePool};
-use url::Url;
+use sqlx::{SqlitePool};
 use uuid::Uuid;
+
+#[derive(Clone, Debug)]
+struct Project {
+    uuid: String,
+    name: String,
+    created_at: NaiveDateTime,
+}
+
+impl Default for Project {
+    fn default() -> Self {
+        Self {
+            uuid: Uuid::new_v4().hyphenated().to_string(),
+            name: "Default Project".into(),
+            created_at: Utc::now().naive_utc(),
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 struct Run {
     run: RunRow,
+    project: Project,
     scm_info: ScmInfo,
     definition: RunDefinition,
 }
-
-#[derive(Clone, Debug)]
-struct RunRow {
-    // Unique identifier for the Run
-    uuid: String,
-    // User-identifiable number for the Run, monotonically increasing
-    num: i64,
-    // Unix status return code from the run, zero is success
-    status: i64,
-    // Globally resolvable URL for fetching raw logs
-    log_url: String,
-    definition: String,
-    scm_info: String,
-    created_at: NaiveDateTime,
-}
-
 /* The basic implementation for Run has all the database access operations
  */
 impl Run {
@@ -46,7 +47,14 @@ impl Run {
             run.scm_info.created_at
         )
         .execute(&mut tx)
-        .await;
+        .await?;
+
+        sqlx::query!(
+            r#"INSERT INTO projects (uuid, name, created_at) VALUES (?, ?, ?)"#,
+            run.project.uuid,
+            run.project.name,
+            run.project.created_at,
+        ).execute(&mut tx).await?;
 
         sqlx::query!(
             r#"INSERT INTO run_definition (uuid, definition, created_at) VALUES (?, ?, ?)"#,
@@ -58,13 +66,14 @@ impl Run {
         .await?;
 
         sqlx::query!(
-                "INSERT INTO runs (uuid, num, status, log_url, definition, scm_info) VALUES ($1, $2, $3, $4, $5, $6)",
+                "INSERT INTO runs (uuid, num, status, log_url, definition, scm_info, project) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 run.run.uuid,
                 run.run.num,
                 run.run.status,
                 run.run.log_url,
                 run.definition.uuid,
                 run.scm_info.uuid,
+                run.project.uuid,
             )
             .execute(&mut tx)
             .await?;
@@ -85,6 +94,15 @@ impl Run {
         )
         .fetch_one(pool)
         .await?;
+
+        let project = sqlx::query_as!(
+            Project,
+            "SELECT * FROM projects WHERE uuid = ?",
+            row.project
+        )
+        .fetch_one(pool)
+        .await?;
+
         let definition = sqlx::query_as!(
             RunDefinition,
             "SELECT * FROM run_definition WHERE uuid = ?",
@@ -96,6 +114,7 @@ impl Run {
         Ok(Run {
             run: row,
             scm_info,
+            project,
             definition,
         })
     }
@@ -105,10 +124,35 @@ impl Default for Run {
     fn default() -> Self {
         Self {
             run: RunRow::default(),
+            project: Project::default(),
             scm_info: ScmInfo::default(),
             definition: RunDefinition::default(),
         }
     }
+}
+
+/*
+ * The RunRow is the struct for the deserialization/serialization of the runs table
+ * unfortunately this is a little bit of misdirection due to the inability to make
+ * nested structs with sqlx work well
+ */
+#[derive(Clone, Debug)]
+struct RunRow {
+    // Unique identifier for the Run
+    uuid: String,
+    // User-identifiable number for the Run, monotonically increasing
+    num: i64,
+    // Unix status return code from the run, zero is success
+    status: i64,
+    // Globally resolvable URL for fetching raw logs
+    log_url: String,
+    // Foreign key to projects
+    project: String,
+    // Foreign key to run_definition
+    definition: String,
+    // Foreign key to scm_info
+    scm_info: String,
+    created_at: NaiveDateTime,
 }
 
 impl Default for RunRow {
@@ -119,6 +163,7 @@ impl Default for RunRow {
             status: 0,
             log_url: "https://example.com/console.log".into(),
             definition: Uuid::new_v4().hyphenated().to_string(),
+            project: Uuid::new_v4().hyphenated().to_string(),
             scm_info: Uuid::new_v4().hyphenated().to_string(),
             created_at: Utc::now().naive_utc(),
         }
