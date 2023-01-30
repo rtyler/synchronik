@@ -169,7 +169,24 @@ async fn main() -> Result<(), tide::Error> {
     if database_url == ":memory:" {
         sqlx::migrate!().run(&pool).await?;
     }
-    let mut state = AppState::new(pool, config.clone());
+    let mut state = AppState::new(pool.clone(), config.clone());
+
+    /*
+     * Make sure the database has all the projects configured
+     */
+
+    for name in config.projects.keys() {
+        match dao::Project::by_name(&name, &pool).await {
+            Ok(_) => {}
+            Err(sqlx::Error::RowNotFound) => {
+                debug!("Project not found in database, creating: {}", name);
+                dao::Project::create(&dao::Project::new(&name), &pool).await?;
+            }
+            Err(e) => {
+                return Err(e.into());
+            }
+        }
+    }
 
     for url in &config.agents {
         debug!("Requesting capabilities from agent: {}", url);

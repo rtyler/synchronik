@@ -3,11 +3,12 @@
  */
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use sqlx::{SqlitePool};
+use sqlx::sqlite::SqliteQueryResult;
+use sqlx::{Sqlite, SqlitePool, Transaction};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
-struct Project {
+pub struct Project {
     uuid: String,
     name: String,
     created_at: NaiveDateTime,
@@ -20,6 +21,36 @@ impl Default for Project {
             name: "Default Project".into(),
             created_at: Utc::now().naive_utc(),
         }
+    }
+}
+
+impl Project {
+    pub fn new(name: &str) -> Self {
+        Self {
+            uuid: Uuid::new_v4().hyphenated().to_string(),
+            name: name.into(),
+            created_at: Utc::now().naive_utc(),
+        }
+    }
+
+    pub async fn by_name(name: &str, pool: &SqlitePool) -> Result<Project, sqlx::Error> {
+        sqlx::query_as!(Project, "SELECT * FROM projects WHERE name = ?", name)
+            .fetch_one(pool)
+            .await
+    }
+
+    pub async fn create(
+        project: &Project,
+        tx: &SqlitePool,
+    ) -> Result<SqliteQueryResult, sqlx::Error> {
+        sqlx::query!(
+            r#"INSERT INTO projects (uuid, name, created_at) VALUES (?, ?, ?)"#,
+            project.uuid,
+            project.name,
+            project.created_at,
+        )
+        .execute(tx)
+        .await
     }
 }
 
@@ -38,7 +69,6 @@ impl Run {
      */
     async fn create(run: &Run, pool: &SqlitePool) -> Result<(), sqlx::Error> {
         let mut tx = pool.begin().await?;
-
         sqlx::query!(
             r#"INSERT INTO scm_info (uuid, git_url, ref, created_at) VALUES (?, ?, ?, ?)"#,
             run.scm_info.uuid,
@@ -48,13 +78,6 @@ impl Run {
         )
         .execute(&mut tx)
         .await?;
-
-        sqlx::query!(
-            r#"INSERT INTO projects (uuid, name, created_at) VALUES (?, ?, ?)"#,
-            run.project.uuid,
-            run.project.name,
-            run.project.created_at,
-        ).execute(&mut tx).await?;
 
         sqlx::query!(
             r#"INSERT INTO run_definition (uuid, definition, created_at) VALUES (?, ?, ?)"#,
@@ -226,7 +249,11 @@ mod tests {
     async fn test_create_a_run() {
         pretty_env_logger::try_init();
         let pool = setup_database().await;
-        let run = Run::default();
+        let project = Project::new("test");
+        Project::create(&project, &pool).await.unwrap();
+
+        let mut run = Run::default();
+        run.project = project;
         let result = Run::create(&run, &pool).await.unwrap();
         let fetched_run = Run::find_by(&run.run.uuid, &pool).await.unwrap();
         assert_eq!(run.run.uuid, fetched_run.run.uuid);
