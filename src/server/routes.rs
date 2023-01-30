@@ -40,13 +40,20 @@ pub async fn project(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
 pub mod api {
     use crate::{AppState, JankyYml, Scm};
     use log::*;
+    use serde::Deserialize;
     use tide::{Request, Response, StatusCode};
+
+    #[derive(Debug, Deserialize)]
+    struct RedirectedForm {
+        next: Option<String>,
+    }
 
     /**
      *  POST /projects/{name}
      */
-    pub async fn execute_project(req: Request<AppState<'_>>) -> Result<Response, tide::Error> {
+    pub async fn execute_project(mut req: Request<AppState<'_>>) -> tide::Result {
         let name: String = req.param("name")?.into();
+        let next: RedirectedForm = req.body_form().await?;
         let state = req.state();
 
         if !state.config.has_project(&name) {
@@ -95,6 +102,10 @@ pub mod api {
                                 .json(&commands)
                                 .send()
                                 .await?;
+
+                            if let Some(red) = &next.next {
+                                return Ok(tide::Redirect::new(red).into());
+                            }
 
                             return Ok(
                                 json!({ "msg": format!("Executing on {}", &agent.url) }).into()

@@ -52,7 +52,8 @@
                                 </td>
                                 <td>
                                     <form method="POST" action="/api/v1/projects/{{this.name}}">
-                                        <input type="submit" value="Execute"/>
+                                        <input type="hidden" name="next" value="/project/{{this.name}}"/>
+                                        <input type="image" value="Execute" src="/static/icons/actions/view-refresh.svg"/>
                                     </form>
                                 </td>
                             </tr>
