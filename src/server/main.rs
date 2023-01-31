@@ -100,6 +100,14 @@ pub struct Agent {
 }
 
 impl Agent {
+    pub fn render_compact(&self, state: &AppState<'_>) -> String {
+        "".into()
+        //let data = serde_json::to_str(self).unwrap_or(serde_json::Value::Array);
+
+        //state.render("views/components/agent/compact.hbs",
+        //             data: data).await.unwrap_or("".into())
+    }
+
     pub fn can_meet(&self, needs: &Vec<String>) -> bool {
         // TODO: Improve the performance of this by reducing the clones
         let mut needs = needs.clone();

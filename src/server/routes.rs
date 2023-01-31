@@ -11,9 +11,12 @@ use tide::{Body, Request};
  *  GET /
  */
 pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
+    let agents: Vec<String> = req.state().agents
+                    .iter()
+                    .map(|a| a.render_compact(req.state())).collect();
     let params = json!({
         "page": "home",
-        "agents" : req.state().agents,
+        "agents" : agents,
         "config" : req.state().config,
         "projects" : crate::dao::Project::list(&req.state().db).await?,
     });
