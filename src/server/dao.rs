@@ -5,7 +5,7 @@
 use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::Serialize;
 use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{Sqlite, SqlitePool, Transaction};
+use sqlx::SqlitePool;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, Serialize)]

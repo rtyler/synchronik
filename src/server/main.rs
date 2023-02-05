@@ -5,7 +5,6 @@
 #[macro_use]
 extern crate serde_json;
 
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 use async_std::sync::{Arc, RwLock};
@@ -13,12 +12,14 @@ use dotenv::dotenv;
 use gumdrop::Options;
 use handlebars::Handlebars;
 use log::*;
-use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
 use url::Url;
 
+mod config;
 mod dao;
 mod routes;
+
+use crate::config::*;
 
 #[derive(Clone, Debug)]
 pub struct AppState<'a> {
@@ -57,95 +58,6 @@ impl AppState<'_> {
         let hb = self.hb.read().await;
         let view = hb.render(name, data)?;
         Ok(tide::Body::from_string(view))
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct JankyYml {
-    needs: Vec<String>,
-    commands: Vec<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-enum Scm {
-    GitHub {
-        owner: String,
-        repo: String,
-        #[serde(rename = "ref")]
-        scm_ref: String,
-    },
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-struct Project {
-    description: String,
-    filename: String,
-    #[serde(with = "serde_yaml::with::singleton_map")]
-    scm: Scm,
-}
-
-/*
- * Internal representation of an Agent that has been "loaded" by the server
- *
- * Loaded meaning the server has pinged the agent and gotten necessary bootstrap
- * information
- */
-#[derive(Clone, Debug, Serialize)]
-pub struct Agent {
-    name: String,
-    url: Url,
-    capabilities: Vec<janky::Capability>,
-}
-
-impl Agent {
-    pub fn render_compact(&self, state: &AppState<'_>) -> String {
-        "".into()
-        //let data = serde_json::to_str(self).unwrap_or(serde_json::Value::Array);
-
-        //state.render("views/components/agent/compact.hbs",
-        //             data: data).await.unwrap_or("".into())
-    }
-
-    pub fn can_meet(&self, needs: &Vec<String>) -> bool {
-        // TODO: Improve the performance of this by reducing the clones
-        let mut needs = needs.clone();
-        needs.sort();
-
-        let mut capabilities: Vec<String> = self
-            .capabilities
-            .iter()
-            .map(|c| c.name.to_lowercase())
-            .collect();
-        capabilities.sort();
-        capabilities == needs
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct AgentConfig {
-    url: Url,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct ServerConfig {
-    agents: HashMap<String, AgentConfig>,
-    projects: HashMap<String, Project>,
-}
-
-impl ServerConfig {
-    fn has_project(&self, name: &str) -> bool {
-        self.projects.contains_key(name)
-    }
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            agents: HashMap::default(),
-            projects: HashMap::default(),
-        }
     }
 }
 
@@ -209,11 +121,11 @@ async fn main() -> Result<(), tide::Error> {
             .await?
             .json()
             .await?;
-        state.agents.push(Agent {
-            name: name.clone(),
-            url: agent.url.clone(),
-            capabilities: response.caps,
-        });
+        state.agents.push(Agent::new(
+            name.to_string(),
+            agent.url.clone(),
+            response.caps,
+        ));
     }
 
     state

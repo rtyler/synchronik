@@ -11,9 +11,12 @@ use tide::{Body, Request};
  *  GET /
  */
 pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
-    let agents: Vec<String> = req.state().agents
-                    .iter()
-                    .map(|a| a.render_compact(req.state())).collect();
+    let agents: Vec<String> = req
+        .state()
+        .agents
+        .iter()
+        .map(|a| a.render_compact(req.state()))
+        .collect();
     let params = json!({
         "page": "home",
         "agents" : agents,
@@ -41,7 +44,8 @@ pub async fn project(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
 }
 
 pub mod api {
-    use crate::{AppState, JankyYml, Scm};
+    use crate::config::{JankyYml, Scm};
+    use crate::AppState;
     use log::*;
     use serde::Deserialize;
     use tide::{Request, Response, StatusCode};
