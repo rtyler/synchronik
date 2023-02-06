@@ -7,6 +7,8 @@
 use crate::AppState;
 use tide::{Body, Request};
 
+use crate::models::Project;
+
 /**
  *  GET /
  */
@@ -21,7 +23,7 @@ pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
         "page": "home",
         "agents" : agents,
         "config" : req.state().config,
-        "projects" : crate::dao::Project::list(&req.state().db).await?,
+        "projects" : Project::list(&req.state().db).await?,
     });
 
     let mut body = req.state().render("index", &params).await?;

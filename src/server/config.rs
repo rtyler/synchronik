@@ -42,9 +42,9 @@ pub struct Project {
  */
 #[derive(Clone, Debug, Serialize)]
 pub struct Agent {
-    name: String,
+    pub name: String,
     pub url: Url,
-    capabilities: Vec<janky::Capability>,
+    pub capabilities: Vec<janky::Capability>,
 }
 
 impl Agent {

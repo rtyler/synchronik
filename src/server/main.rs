@@ -16,10 +16,11 @@ use sqlx::SqlitePool;
 use url::Url;
 
 mod config;
-mod dao;
+mod models;
 mod routes;
 
 use crate::config::*;
+use crate::models::Project;
 
 #[derive(Clone, Debug)]
 pub struct AppState<'a> {
@@ -103,11 +104,11 @@ async fn main() -> Result<(), tide::Error> {
      */
 
     for name in config.projects.keys() {
-        match dao::Project::by_name(&name, &pool).await {
+        match Project::by_name(&name, &pool).await {
             Ok(_) => {}
             Err(sqlx::Error::RowNotFound) => {
                 debug!("Project not found in database, creating: {}", name);
-                dao::Project::create(&dao::Project::new(&name), &pool).await?;
+                Project::create(&Project::new(&name), &pool).await?;
             }
             Err(e) => {
                 return Err(e.into());
