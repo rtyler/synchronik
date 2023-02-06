@@ -104,11 +104,11 @@ async fn main() -> Result<(), tide::Error> {
      */
 
     for name in config.projects.keys() {
-        match Project::by_name(&name, &pool).await {
+        match Project::by_name(name, &pool).await {
             Ok(_) => {}
             Err(sqlx::Error::RowNotFound) => {
                 debug!("Project not found in database, creating: {}", name);
-                Project::create(&Project::new(&name), &pool).await?;
+                Project::create(&Project::new(name), &pool).await?;
             }
             Err(e) => {
                 return Err(e.into());

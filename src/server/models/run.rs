@@ -127,7 +127,7 @@ mod tests {
 
         let mut run = Run::default();
         run.project = project;
-        let _result = Run::create(&run, &pool).await.unwrap();
+        Run::create(&run, &pool).await.unwrap();
         let fetched_run = Run::find_by(&run.run.uuid, &pool).await.unwrap();
         assert_eq!(run.run.uuid, fetched_run.run.uuid);
     }

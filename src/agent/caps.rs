@@ -36,7 +36,7 @@ fn locate_on_path(bin: &str) -> Option<PathBuf> {
             let full_path = path_dir.join(bin);
             if full_path.is_file() {
                 // TODO: Should check to see if the path is executable
-                return Some(PathBuf::from(full_path));
+                return Some(full_path);
             }
         }
     }
@@ -46,7 +46,7 @@ fn locate_on_path(bin: &str) -> Option<PathBuf> {
 /*
  * Git capability will determine whether `git` exists on the system
  */
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "name")]
 pub struct Git {
     path: PathBuf,
@@ -65,7 +65,7 @@ impl Capability for Git {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "name")]
 pub struct Cargo {
     path: PathBuf,

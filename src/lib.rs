@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 use uuid::Uuid;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Capability {
     pub name: String,
     path: PathBuf,
@@ -24,12 +24,12 @@ impl Capability {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 struct CapsRequest {}
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CapsResponse {
     pub caps: Vec<Capability>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Command {
     pub script: String,
 }
@@ -42,12 +42,12 @@ impl Command {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CommandRequest {
     pub commands: Vec<Command>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CommandResponse {
     pub uuid: Uuid,
     pub stream: Option<Url>,
