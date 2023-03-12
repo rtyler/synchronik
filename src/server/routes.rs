@@ -46,7 +46,7 @@ pub async fn project(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
 }
 
 pub mod api {
-    use crate::config::{JankyYml, Scm};
+    use crate::config::{Scm, Yml};
     use crate::AppState;
     use log::*;
     use serde::Deserialize;
@@ -88,18 +88,18 @@ pub mod api {
                             &project.filename,
                         )
                         .await?;
-                    let jankyfile: JankyYml = serde_yaml::from_str(&res.text().await?)?;
-                    debug!("text: {:?}", jankyfile);
+                    let config_file: Yml = serde_yaml::from_str(&res.text().await?)?;
+                    debug!("text: {:?}", config_file);
 
                     for agent in &state.agents {
-                        if agent.can_meet(&jankyfile.needs) {
+                        if agent.can_meet(&config_file.needs) {
                             debug!("agent: {:?} can meet our needs", agent);
-                            let commands: Vec<janky::Command> = jankyfile
+                            let commands: Vec<synchronik::Command> = config_file
                                 .commands
                                 .iter()
-                                .map(|c| janky::Command::with_script(c))
+                                .map(|c| synchronik::Command::with_script(c))
                                 .collect();
-                            let commands = janky::CommandRequest { commands };
+                            let commands = synchronik::CommandRequest { commands };
                             let client = reqwest::Client::new();
                             let _res = client
                                 .put(

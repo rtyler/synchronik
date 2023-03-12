@@ -2,11 +2,11 @@
 openapi: "3.0.0"
 info:
   description: |
-    Janky API v1 defintion
+    Synchronik API v1 defintion
   version: "1.0.0"
-  title: Janky APIs
+  title: Synchronik APIs
   contact:
-    email: "rtyler+janky@brokenco.de"
+    email: "rtyler+synchronik@brokenco.de"
   license:
     name: "AGPL v3.0"
     url: "https://www.gnu.org/licenses/agpl-3.0.en.html"
@@ -33,7 +33,7 @@ paths:
         - in: path
           name: name
           required: true
-          example: 'janky'
+          example: 'synchronik'
           schema:
             type: string
       responses:

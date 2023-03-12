@@ -1,14 +1,15 @@
-= Janky CI
+= Synchronik
 
-Janky is a simple CI system built in Rust. This is performative coding and not
-intended to be a production system you can actually use.
+Synchronik is a simple task execution system built in Rust. This is
+performative coding and not intended to be a production system you can actually
+use.
 
 * Two binaries:
-  * `janky-server`
+  * `synchronik-server`
     * Listens HTTP
-    * Does web shit
+    * Does web things
     * Interacts with agents
-  * `janky-agent`:
+  * `synchronik-agent`:
     * Run workloads
     * Listen HTTP
     * executes commands

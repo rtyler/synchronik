@@ -6,10 +6,10 @@ use url::Url;
 use crate::AppState;
 
 /*
- * Representation of the Janky YAML format
+ * Representation of the Synchronik YAML format
  */
 #[derive(Clone, Debug, Deserialize)]
-pub struct JankyYml {
+pub struct Yml {
     pub needs: Vec<String>,
     pub commands: Vec<String>,
 }
@@ -44,11 +44,11 @@ pub struct Project {
 pub struct Agent {
     pub name: String,
     pub url: Url,
-    pub capabilities: Vec<janky::Capability>,
+    pub capabilities: Vec<synchronik::Capability>,
 }
 
 impl Agent {
-    pub fn new(name: String, url: Url, capabilities: Vec<janky::Capability>) -> Self {
+    pub fn new(name: String, url: Url, capabilities: Vec<synchronik::Capability>) -> Self {
         Self {
             name,
             url,

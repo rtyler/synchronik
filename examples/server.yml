@@ -5,22 +5,22 @@ agents:
   'Duplicate Local':
     url: 'http://localhost:9000'
 projects:
-  'janky':
+  'synchronik':
     description: |
-      Self-hosted Janky project
-    filename: 'ci.janky.yml'
+      Self-hosted project
+    filename: 'ci.synchronik.yml'
     scm:
       github:
         owner: 'rtyler'
-        repo: 'janky'
+        repo: 'synchronik'
         ref: 'main'
-  'janky with spaces':
+  'with spaces':
     description: A test configuration with spaces in the name
-    filename: 'ci.janky.yml'
+    filename: 'ci.synchronik.yml'
     scm:
       github:
         owner: 'rtyler'
-        repo: 'janky'
+        repo: 'synchronik'
         ref: 'main'
   # The filetype Git is not yet supported
   #- type: 'git'

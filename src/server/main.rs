@@ -1,5 +1,5 @@
 /*
- * This is the main Janky entrypoint for the server"
+ * This is the main Synchronik entrypoint for the server
  */
 
 #[macro_use]
@@ -93,7 +93,7 @@ async fn main() -> Result<(), tide::Error> {
     let database_url = std::env::var("DATABASE_URL").unwrap_or(":memory:".to_string());
     let pool = SqlitePool::connect(&database_url).await?;
 
-    /* If janky-server is running in memory, make sure the database is set up properly */
+    /* If synchronik-server is running in memory, make sure the database is set up properly */
     if database_url == ":memory:" {
         sqlx::migrate!().run(&pool).await?;
     }
@@ -118,10 +118,11 @@ async fn main() -> Result<(), tide::Error> {
 
     for (name, agent) in config.agents.iter() {
         debug!("Requesting capabilities from agent: {:?}", agent);
-        let response: janky::CapsResponse = reqwest::get(agent.url.join("/api/v1/capabilities")?)
-            .await?
-            .json()
-            .await?;
+        let response: synchronik::CapsResponse =
+            reqwest::get(agent.url.join("/api/v1/capabilities")?)
+                .await?
+                .json()
+                .await?;
         state.agents.push(Agent::new(
             name.to_string(),
             agent.url.clone(),
@@ -177,7 +178,7 @@ async fn main() -> Result<(), tide::Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use janky::*;
+    use synchronik::*;
 
     #[test]
     fn agent_can_meet_false() {

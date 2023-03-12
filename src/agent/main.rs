@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use async_std::channel::{bounded, Receiver, Sender};
 use dotenv::dotenv;
-use janky::CommandRequest;
 use log::*;
+use synchronik::CommandRequest;
 use uuid::Uuid;
 
 const AGENT_LOGS_DIR: &str = "agent-logs";
@@ -20,13 +20,13 @@ mod routes {
      *  GET /
      */
     pub async fn index(_req: Request<crate::State>) -> Result<Body, tide::Error> {
-        Ok("Hello World from the Janky Agent".into())
+        Ok("Hello World from the Synchronik Agent".into())
     }
 
     pub mod api {
         use crate::caps::*;
         use crate::*;
-        use janky::{CommandRequest, CommandResponse};
+        use synchronik::{CommandRequest, CommandResponse};
         use tide::{Body, Request, Response, StatusCode};
         use uuid::Uuid;
 
