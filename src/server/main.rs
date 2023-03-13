@@ -82,10 +82,7 @@ async fn main() -> Result<(), tide::Error> {
     debug!("Starting with options: {:?}", opts);
 
     let config = match opts.config {
-        Some(path) => {
-            let config_file = std::fs::File::open(path).expect("Failed to open config file");
-            serde_yaml::from_reader(config_file).expect("Failed to read config file")
-        }
+        Some(path) => ServerConfig::from_path(&path)?,
         None => ServerConfig::default(),
     };
     debug!("Starting with config: {:?}", config);

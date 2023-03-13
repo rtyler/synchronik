@@ -12,15 +12,20 @@ name = "synchronik-agent"
 path = "src/agent/main.rs"
 
 [dependencies]
+anyhow = "*"
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 chrono = "0.4"
 dotenv = "~0.15"
 driftwood = "0"
+# Library for handling filesystem globs
+glob = "0.3"
 # Command line parsing
 gumdrop = "0.8"
 handlebars = { version = "4", features = ["dir_source"] }
 html-escape = "0.2"
 log = "~0.4.8"
+# Used for filesystem notifications to reload data live
+notify = "5"
 # Needed for GitHub API calls
 octocrab = "0.18"
 os_pipe = "1"

@@ -7,8 +7,8 @@
 use log::*;
 use tide::{Body, Request};
 
-use crate::AppState;
 use crate::models::Project;
+use crate::AppState;
 
 /**
  *  GET /
