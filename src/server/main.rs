@@ -117,7 +117,7 @@ async fn main() -> Result<(), tide::Error> {
     }
 
     for (name, agent) in config.agents.iter() {
-        debug!("Requesting capabilities from agent: {:?}", agent);
+        debug!("Requesting capabilities from agent: {} {:?}", name, agent);
         let response: synchronik::CapsResponse =
             reqwest::get(agent.url.join("/api/v1/capabilities")?)
                 .await?

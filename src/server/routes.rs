@@ -4,9 +4,10 @@
  *
  * Modules are nested for cleaner organization here
  */
-use crate::AppState;
+use log::*;
 use tide::{Body, Request};
 
+use crate::AppState;
 use crate::models::Project;
 
 /**
@@ -26,6 +27,7 @@ pub async fn index(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
         "projects" : Project::list(&req.state().db).await?,
     });
 
+    debug!("Rendering home page with: {:?}", params);
     let mut body = req.state().render("index", &params).await?;
     body.set_mime("text/html");
     Ok(body)

@@ -57,7 +57,7 @@ impl Agent {
     }
 
     pub fn render_compact(&self, _state: &AppState<'_>) -> String {
-        "".into()
+        self.name.clone()
         //let data = serde_json::to_str(self).unwrap_or(serde_json::Value::Array);
 
         //state.render("views/components/agent/compact.hbs",
