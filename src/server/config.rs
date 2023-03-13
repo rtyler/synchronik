@@ -10,7 +10,7 @@ use crate::AppState;
 /*
  * Representation of the Synchronik YAML format
  */
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Yml {
     pub needs: Vec<String>,
     pub commands: Vec<String>,
@@ -19,6 +19,11 @@ pub struct Yml {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Scm {
+    /*
+     * The Nonexistent Scm is used for stubbing out the Scm properties when
+     * inlining configuration
+     */
+    Nonexistent,
     GitHub {
         owner: String,
         repo: String,
@@ -31,9 +36,20 @@ pub enum Scm {
 #[serde(rename_all = "lowercase")]
 pub struct Project {
     description: String,
-    pub filename: String,
-    #[serde(with = "serde_yaml::with::singleton_map")]
+    /*
+     * Used for optionally defining an inline Yml configuration
+     */
+    inline: Option<Yml>,
+    pub filename: Option<String>,
+    #[serde(default = "default_scm", with = "serde_yaml::with::singleton_map")]
     pub scm: Scm,
+}
+
+/*
+ * Simple default scm for use when nothing has been otherwise defined
+ */
+fn default_scm() -> Scm {
+    Scm::Nonexistent
 }
 
 /*
@@ -86,7 +102,7 @@ pub struct AgentConfig {
     pub url: Url,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ServerConfig {
     pub agents: HashMap<String, AgentConfig>,
     pub projects: HashMap<String, Project>,
@@ -153,21 +169,6 @@ impl ServerConfig {
         match path.is_file() {
             true => Self::from_filepath(&path),
             false => Self::from_dirpath(&path),
-        }
-    }
-}
-
-/*
- * Default trait implementation for ServerConfig, will result in an empty set of agents and
- * projects
- *
- * Not really useful for anything other than tests
- */
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            agents: HashMap::default(),
-            projects: HashMap::default(),
         }
     }
 }
@@ -249,6 +250,60 @@ mod tests {
             }
             Err(e) => {
                 assert!(false, "Failed to process ServerConfig: {:?}", e);
+            }
+        }
+    }
+
+    #[test]
+    fn parse_config_with_scm() {
+        let conf = r#"
+---
+agents:
+  'Local':
+    url: 'http://localhost:9000'
+projects:
+  'synchronik':
+    description: |
+      Self-hosted project
+    filename: 'ci.synchronik.yml'
+    scm:
+      github:
+        owner: 'rtyler'
+        repo: 'synchronik'
+        ref: 'main'
+"#;
+        let value: ServerConfig = serde_yaml::from_str(&conf).expect("Failed to parse");
+        assert_eq!(value.agents.len(), 1);
+    }
+
+    #[test]
+    fn parse_config_inline() {
+        let conf = r#"
+---
+agents:
+  'Local':
+    url: 'http://localhost:9000'
+projects:
+  'synchronik':
+    description: |
+      Self-hosted project
+    inline:
+      needs:
+        - git
+      commands:
+        - 'whoami'
+"#;
+        let value: ServerConfig = serde_yaml::from_str(&conf).expect("Failed to parse");
+        assert_eq!(value.agents.len(), 1);
+        assert_eq!(value.projects.len(), 1);
+
+        let project = value.projects.get("synchronik").unwrap();
+        match &project.inline {
+            Some(yml) => {
+                assert!(yml.commands.contains(&"whoami".to_string()));
+            }
+            None => {
+                assert!(false);
             }
         }
     }

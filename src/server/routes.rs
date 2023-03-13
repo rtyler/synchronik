@@ -74,21 +74,20 @@ pub mod api {
 
         if let Some(project) = state.config.projects.get(&name) {
             match &project.scm {
+                Scm::Nonexistent => {}
                 Scm::GitHub {
                     owner,
                     repo,
                     scm_ref,
                 } => {
-                    debug!(
-                        "Fetching the file {} from {}/{}",
-                        &project.filename, owner, repo
-                    );
+                    let filename = match &project.filename {
+                        None => "synchronik.yml".to_string(),
+                        Some(filename) => filename.to_string(),
+                    };
+                    debug!("Fetching the file {} from {}/{}", filename, owner, repo);
                     let res = octocrab::instance()
                         .repos(owner, repo)
-                        .raw_file(
-                            octocrab::params::repos::Commitish(scm_ref.into()),
-                            &project.filename,
-                        )
+                        .raw_file(octocrab::params::repos::Commitish(scm_ref.into()), filename)
                         .await?;
                     let config_file: Yml = serde_yaml::from_str(&res.text().await?)?;
                     debug!("text: {:?}", config_file);

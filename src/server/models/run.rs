@@ -2,7 +2,7 @@ use sqlx::SqlitePool;
 
 use crate::models::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Run {
     run: RunRow,
     project: Project,
@@ -88,17 +88,6 @@ impl Run {
             project,
             definition,
         })
-    }
-}
-
-impl Default for Run {
-    fn default() -> Self {
-        Self {
-            run: RunRow::default(),
-            project: Project::default(),
-            scm_info: ScmInfo::default(),
-            definition: RunDefinition::default(),
-        }
     }
 }
 
