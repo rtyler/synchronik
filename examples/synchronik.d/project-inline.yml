@@ -1,0 +1,11 @@
+---
+projects:
+  'inline-config':
+    description: |
+      An inline configured project
+    filename: 'ci.synchronik.yml'
+    scm:
+      github:
+        owner: 'rtyler'
+        repo: 'synchronik'
+        ref: 'main'

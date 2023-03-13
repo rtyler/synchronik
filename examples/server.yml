@@ -2,8 +2,6 @@
 agents:
   'Local':
     url: 'http://localhost:9000'
-  'Duplicate Local':
-    url: 'http://localhost:9000'
 projects:
   'synchronik':
     description: |

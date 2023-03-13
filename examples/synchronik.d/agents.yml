@@ -1,0 +1,4 @@
+---
+agents:
+  'Local':
+    url: 'http://localhost:9000'

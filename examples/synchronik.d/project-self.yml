@@ -1,0 +1,11 @@
+---
+projects:
+  'synchronik':
+    description: |
+      Self-hosted project
+    filename: 'ci.synchronik.yml'
+    scm:
+      github:
+        owner: 'rtyler'
+        repo: 'synchronik'
+        ref: 'main'
