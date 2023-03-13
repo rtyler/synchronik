@@ -49,6 +49,7 @@ pub async fn project(req: Request<AppState<'_>>) -> Result<Body, tide::Error> {
 
 pub mod api {
     use crate::config::{Scm, Yml};
+    use crate::Agent;
     use crate::AppState;
     use log::*;
     use serde::Deserialize;
@@ -74,7 +75,16 @@ pub mod api {
 
         if let Some(project) = state.config.projects.get(&name) {
             match &project.scm {
-                Scm::Nonexistent => {}
+                Scm::Nonexistent => {
+                    info!("Nonexistent SCM, using inline configuration for {}", name);
+                    info!("configuration: {:?}", project.inline);
+                    if let Some(config) = &project.inline {
+                        execute_commands(config, &state.agents).await?;
+                        if let Some(red) = &next.next {
+                            return Ok(tide::Redirect::new(red).into());
+                        }
+                    }
+                }
                 Scm::GitHub {
                     owner,
                     repo,
@@ -91,41 +101,42 @@ pub mod api {
                         .await?;
                     let config_file: Yml = serde_yaml::from_str(&res.text().await?)?;
                     debug!("text: {:?}", config_file);
-
-                    for agent in &state.agents {
-                        if agent.can_meet(&config_file.needs) {
-                            debug!("agent: {:?} can meet our needs", agent);
-                            let commands: Vec<synchronik::Command> = config_file
-                                .commands
-                                .iter()
-                                .map(|c| synchronik::Command::with_script(c))
-                                .collect();
-                            let commands = synchronik::CommandRequest { commands };
-                            let client = reqwest::Client::new();
-                            let _res = client
-                                .put(
-                                    agent
-                                        .url
-                                        .join("/api/v1/execute")
-                                        .expect("Failed to join execute URL"),
-                                )
-                                .json(&commands)
-                                .send()
-                                .await?;
-
-                            if let Some(red) = &next.next {
-                                return Ok(tide::Redirect::new(red).into());
-                            }
-
-                            return Ok(
-                                json!({ "msg": format!("Executing on {}", &agent.url) }).into()
-                            );
-                        }
+                    execute_commands(&config_file, &state.agents).await?;
+                    if let Some(red) = &next.next {
+                        return Ok(tide::Redirect::new(red).into());
                     }
                 }
             }
             return Ok("{}".into());
         }
         Ok(Response::new(StatusCode::InternalServerError))
+    }
+
+    async fn execute_commands(config: &Yml, agents: &Vec<Agent>) -> Result<(), tide::Error> {
+        debug!("working {:?}", config);
+        for agent in agents {
+            debug!("agent: {:?}", agent);
+            if agent.can_meet(&config.needs) {
+                debug!("agent: {:?} can meet our needs", agent);
+                let commands: Vec<synchronik::Command> = config
+                    .commands
+                    .iter()
+                    .map(|c| synchronik::Command::with_script(c))
+                    .collect();
+                let commands = synchronik::CommandRequest { commands };
+                let client = reqwest::Client::new();
+                let _res = client
+                    .put(
+                        agent
+                            .url
+                            .join("/api/v1/execute")
+                            .expect("Failed to join execute URL"),
+                    )
+                    .json(&commands)
+                    .send()
+                    .await?;
+            }
+        }
+        Ok(())
     }
 }

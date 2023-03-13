@@ -39,7 +39,7 @@ pub struct Project {
     /*
      * Used for optionally defining an inline Yml configuration
      */
-    inline: Option<Yml>,
+    pub inline: Option<Yml>,
     pub filename: Option<String>,
     #[serde(default = "default_scm", with = "serde_yaml::with::singleton_map")]
     pub scm: Scm,
@@ -58,11 +58,21 @@ fn default_scm() -> Scm {
  * Loaded meaning the server has pinged the agent and gotten necessary bootstrap
  * information
  */
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Agent {
     pub name: String,
     pub url: Url,
     pub capabilities: Vec<synchronik::Capability>,
+}
+
+impl Default for Agent {
+    fn default() -> Self {
+        Self {
+            name: "default-agent".into(),
+            url: Url::parse("http://example.com").unwrap(),
+            capabilities: vec![],
+        }
+    }
 }
 
 impl Agent {
@@ -82,18 +92,22 @@ impl Agent {
         //             data: data).await.unwrap_or("".into())
     }
 
+    /*
+     * Determine if this agent can meet the specified needs
+     */
     pub fn can_meet(&self, needs: &Vec<String>) -> bool {
-        // TODO: Improve the performance of this by reducing the clones
-        let mut needs = needs.clone();
-        needs.sort();
-
-        let mut capabilities: Vec<String> = self
+        let capabilities: Vec<String> = self
             .capabilities
             .iter()
             .map(|c| c.name.to_lowercase())
             .collect();
-        capabilities.sort();
-        capabilities == needs
+
+        for need in needs {
+            if !capabilities.contains(&need) {
+                return false;
+            }
+        }
+        true
     }
 }
 
@@ -202,6 +216,7 @@ fn merge_yaml(a: &mut serde_yaml::Value, b: serde_yaml::Value) {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+    use synchronik::Capability;
 
     #[test]
     fn test_serverconfig_from_filepath() {
@@ -306,5 +321,72 @@ projects:
                 assert!(false);
             }
         }
+    }
+
+    #[test]
+    fn agent_can_meet_false() {
+        let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
+        let capabilities = vec![Capability::with_name("rustc")];
+        let agent = Agent {
+            name: "test".into(),
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert_eq!(false, agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_true() {
+        let needs: Vec<String> = vec!["dotnet".into()];
+        let capabilities = vec![Capability::with_name("dotnet")];
+        let agent = Agent {
+            name: "test".into(),
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert!(agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_false_multiple() {
+        let needs: Vec<String> = vec!["rspec".into(), "git".into(), "dotnet".into()];
+        let capabilities = vec![Capability::with_name("dotnet")];
+        let agent = Agent {
+            name: "test".into(),
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert_eq!(false, agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_true_multiple() {
+        let needs: Vec<String> = vec!["rspec".into(), "dotnet".into()];
+        let capabilities = vec![
+            Capability::with_name("dotnet"),
+            Capability::with_name("rspec"),
+        ];
+        let agent = Agent {
+            name: "test".into(),
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert!(agent.can_meet(&needs));
+    }
+
+    #[test]
+    fn agent_can_meet_intersection() {
+        let needs: Vec<String> = vec!["git".into()];
+        let capabilities = vec![
+            Capability::with_name("dotnet"),
+            Capability::with_name("git"),
+            Capability::with_name("rspec"),
+        ];
+        let agent = Agent {
+            name: "test".into(),
+            url: Url::parse("http://localhost").unwrap(),
+            capabilities,
+        };
+        assert!(agent.can_meet(&needs));
     }
 }
